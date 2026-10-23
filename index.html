@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Querio+</title>
+    <!--
+      No inline <script> here: MV3's default CSP (script-src 'self') blocks inline
+      scripts, so a bootstrap script would only produce CSP errors and never run.
+      Theme is applied by React on mount (applyTheme in App.tsx, which reads the
+      DevTools panel theme for 'system' and the stored setting from chrome.storage).
+      The static data-theme="light" above is a safe default to avoid a flash before
+      React paints; it is corrected within the first mount effect.
+    -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/panel/main.tsx"></script>
+  </body>
+</html>
