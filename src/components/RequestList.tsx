@@ -266,6 +266,7 @@ function Row({
   isSelected,
   zebra,
   onSelect,
+  isDiffBase,
 }: {
   entry: CapturedEntry;
   columns: ReadonlyArray<ColumnKey>;
@@ -273,6 +274,7 @@ function Row({
   isSelected: boolean;
   zebra: boolean;
   onSelect: (id: string) => void;
+  isDiffBase?: boolean;
 }): React.ReactElement {
   const isError = entry.errorState === 'error';
   const bg = zebra ? 'var(--bg-subtle)' : 'transparent';
@@ -290,8 +292,8 @@ function Row({
         minHeight: 28,
         cursor: 'pointer',
         borderBottom: '1px solid var(--border)',
-        borderLeft: `3px solid ${isSelected ? 'var(--color-brand)' : 'transparent'}`,
-        background: bg,
+        borderLeft: `3px solid ${isDiffBase ? 'var(--color-info)' : isSelected ? 'var(--color-brand)' : 'transparent'}`,
+        background: isDiffBase ? 'rgba(59, 130, 246, 0.15)' : bg,
         boxShadow: isError ? 'inset 0 0 0 9999px color-mix(in srgb, var(--color-error) 6%, transparent)' : undefined,
         color: isError ? 'var(--color-error)' : 'var(--text)',
       }}
@@ -330,6 +332,7 @@ export default function RequestList({
   selectedId,
   onSelect,
   totalCount,
+  diffSelectingId,
 }: {
   totalCount: number;
   entries: ReadonlyArray<CapturedEntry>;
@@ -338,6 +341,8 @@ export default function RequestList({
   onColumnWidthChange: (col: ColumnKey, width: number) => void;
   selectedId: string | undefined;
   onSelect: (id: string) => void;
+  /** When set, highlights this row as the "left" side of a pending diff comparison */
+  diffSelectingId?: string;
 }): React.ReactElement {
   const totalWidth = columns.reduce((sum, c) => sum + columnWidths[c], 0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -455,6 +460,7 @@ export default function RequestList({
               isSelected={entry.id === selectedId}
               zebra={i % 2 === 1}
               onSelect={onSelect}
+              isDiffBase={entry.id === diffSelectingId}
             />
           ))
         )}

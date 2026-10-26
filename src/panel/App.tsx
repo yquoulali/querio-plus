@@ -9,6 +9,7 @@ import React, {
 import Toolbar from '../components/Toolbar';
 import RequestList from '../components/RequestList';
 import RequestDetail from '../components/RequestDetail';
+import DiffModal from '../components/DiffModal';
 import { getSnapshot, subscribe, clear, replaceAll } from '../capture/store';
 import { resetSeenEntries } from '../capture/dedup';
 import { applyFilter, emptyFilter, type FilterState } from '../features/filter';
@@ -32,6 +33,14 @@ import {
 } from '../settings';
 import type { CapturedEntry } from '../types';
 
+/** State for the diff comparison feature */
+interface DiffState {
+  /** First request selected for comparison */
+  left: CapturedEntry | null;
+  /** When true, user is selecting the second request */
+  selecting: boolean;
+}
+
 function download(filename: string, text: string): void {
   const blob = new Blob([text], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -54,6 +63,8 @@ export default function App(): React.ReactElement {
     useState<Record<ColumnKey, number>>(DEFAULT_COLUMN_WIDTHS);
   const [splitRatio, setSplitRatio] = useState(0.46);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+  const [diffState, setDiffState] = useState<DiffState>({ left: null, selecting: false });
+  const [diffRight, setDiffRight] = useState<CapturedEntry | null>(null);
   const splitContainerRef = useRef<HTMLDivElement>(null);
 
   // Load persisted settings once on mount; apply stored theme over the inline bootstrap (P8).
@@ -133,6 +144,40 @@ export default function App(): React.ReactElement {
 
   const selected = filtered.find((e) => e.id === selectedId) ?? entries.find((e) => e.id === selectedId);
 
+  /** Start diff comparison mode with the currently selected request */
+  const onStartCompare = useCallback((entry: CapturedEntry) => {
+    setDiffState({ left: entry, selecting: true });
+  }, []);
+
+  /** Handle clicking a row while in diff selection mode */
+  const onSelectForDiff = useCallback(
+    (id: string) => {
+      if (!diffState.selecting || !diffState.left) {
+        setSelectedId(id);
+        return;
+      }
+      // Don't compare the same request
+      if (id === diffState.left.id) return;
+      const right = entries.find((e) => e.id === id);
+      if (right) {
+        setDiffRight(right);
+        setDiffState({ left: diffState.left, selecting: false });
+      }
+    },
+    [diffState, entries],
+  );
+
+  /** Cancel diff selection mode */
+  const onCancelDiffSelect = useCallback(() => {
+    setDiffState({ left: null, selecting: false });
+  }, []);
+
+  /** Close the diff modal */
+  const onCloseDiff = useCallback(() => {
+    setDiffRight(null);
+    setDiffState({ left: null, selecting: false });
+  }, []);
+
   const onExport = () => {
     void exportSessionWithBodies(entries).then((session) =>
       download('querio-plus-session.json', JSON.stringify(session, null, 2)),
@@ -172,12 +217,46 @@ export default function App(): React.ReactElement {
           clear();
           resetSeenEntries();
           setSelectedId(undefined);
+          setDiffState({ left: null, selecting: false });
         }}
         onExport={onExport}
         onImport={onImport}
         shownCount={filtered.length}
         totalCount={entries.length}
       />
+
+      {/* Diff selection banner */}
+      {diffState.selecting && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            padding: '10px 16px',
+            background: 'var(--color-info)',
+            color: '#fff',
+            fontSize: 13,
+            fontWeight: 500,
+          }}
+        >
+          <span>
+            Select another request to compare with <strong>{diffState.left?.name}</strong>
+          </span>
+          <button
+            className="btn btn-sm"
+            onClick={onCancelDiffSelect}
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              color: '#fff',
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       <div ref={splitContainerRef} style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         <div
           style={{
@@ -191,11 +270,12 @@ export default function App(): React.ReactElement {
             columnWidths={columnWidths}
             onColumnWidthChange={onColumnWidthChange}
             selectedId={selectedId}
-            onSelect={setSelectedId}
+            onSelect={onSelectForDiff}
             totalCount={entries.length}
+            diffSelectingId={diffState.selecting ? diffState.left?.id : undefined}
           />
         </div>
-        {selected && (
+        {selected && !diffState.selecting && (
           <>
             <div
               onPointerDown={onGutterPointerDown}
@@ -210,11 +290,20 @@ export default function App(): React.ReactElement {
               title="Drag to resize"
             />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <RequestDetail entry={selected} onClose={() => setSelectedId(undefined)} />
+              <RequestDetail
+                entry={selected}
+                onClose={() => setSelectedId(undefined)}
+                onCompare={() => onStartCompare(selected)}
+              />
             </div>
           </>
         )}
       </div>
+
+      {/* Diff modal */}
+      {diffState.left && diffRight && (
+        <DiffModal left={diffState.left} right={diffRight} onClose={onCloseDiff} />
+      )}
     </div>
   );
 }

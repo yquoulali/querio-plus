@@ -5,6 +5,4 @@ dist
 coverage
 .vite
 .reference
-dist.crx
-dist.pem
-dist.zip
+.claude

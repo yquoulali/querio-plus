@@ -85,9 +85,11 @@ function isPlainObject(v: unknown): boolean {
 export default function RequestDetail({
   entry,
   onClose,
+  onCompare,
 }: {
   entry: CapturedEntry;
   onClose?: () => void;
+  onCompare?: () => void;
 }): React.ReactElement {
   const [tab, setTab] = useState<Tab>('general');
   const [body, setBody] = useState<unknown>(entry.responseBody);
@@ -153,17 +155,27 @@ export default function RequestDetail({
         <span style={{ color: 'var(--text-muted)', fontSize: 11, flex: '0 0 auto' }}>
           {entry.time.toFixed(0)} ms · {formatSize(entry.size)}
         </span>
-        {onClose && (
-          <button
-            className="btn btn-sm"
-            onClick={onClose}
-            aria-label="Close details"
-            title="Close details"
-            style={{ marginLeft: 'auto', flex: '0 0 auto' }}
-          >
-            ×
-          </button>
-        )}
+        <span style={{ marginLeft: 'auto', display: 'flex', gap: 6, flex: '0 0 auto' }}>
+          {onCompare && (
+            <button
+              className="btn btn-sm"
+              onClick={onCompare}
+              title="Compare response with another request"
+            >
+              Compare
+            </button>
+          )}
+          {onClose && (
+            <button
+              className="btn btn-sm"
+              onClick={onClose}
+              aria-label="Close details"
+              title="Close details"
+            >
+              ×
+            </button>
+          )}
+        </span>
       </div>
       <div
         style={{

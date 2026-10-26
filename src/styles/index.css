@@ -171,6 +171,14 @@ body {
   background: var(--bg-row-hover);
 }
 
+.diff-row:hover {
+  filter: brightness(0.95);
+}
+
+[data-theme='dark'] .diff-row:hover {
+  filter: brightness(1.1);
+}
+
 kbd {
   font-family: var(--font-mono);
   font-size: 10px;
