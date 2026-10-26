@@ -21,10 +21,12 @@ import {
   loadColumnWidths,
   loadSplitRatio,
   loadTheme,
+  loadWsCapture,
   saveColumns,
   saveColumnWidths,
   saveSplitRatio,
   saveTheme,
+  saveWsCapture,
   setPreserveLog as setPreserveLogGlobal,
   DEFAULT_COLUMNS,
   DEFAULT_COLUMN_WIDTHS,
@@ -58,6 +60,7 @@ export default function App(): React.ReactElement {
   const [search, setSearch] = useState('');
   const [theme, setTheme] = useState<ThemeSetting>('system');
   const [preserveLog, setPreserveLog] = useState(false);
+  const [wsCapture, setWsCapture] = useState(false);
   const [columns, setColumns] = useState<ColumnKey[]>(DEFAULT_COLUMNS);
   const [columnWidths, setColumnWidths] =
     useState<Record<ColumnKey, number>>(DEFAULT_COLUMN_WIDTHS);
@@ -76,6 +79,7 @@ export default function App(): React.ReactElement {
     void loadColumns().then(setColumns);
     void loadColumnWidths().then(setColumnWidths);
     void loadSplitRatio().then(setSplitRatio);
+    void loadWsCapture().then(setWsCapture);
   }, []);
 
   const onColumnWidthChange = useCallback((col: ColumnKey, width: number) => {
@@ -127,6 +131,13 @@ export default function App(): React.ReactElement {
   const onPreserveLogChange = (next: boolean) => {
     setPreserveLog(next);
     setPreserveLogGlobal(next);
+  };
+
+  const onWsCaptureChange = (next: boolean) => {
+    setWsCapture(next);
+    saveWsCapture(next);
+    // Notify main.tsx to start/stop WebSocket capture
+    window.dispatchEvent(new CustomEvent('querio-ws-capture-change', { detail: next }));
   };
 
   // Full-text search (F7): match already-cached response bodies (resolved cache value
@@ -211,6 +222,8 @@ export default function App(): React.ReactElement {
         onThemeChange={onThemeChange}
         preserveLog={preserveLog}
         onPreserveLogChange={onPreserveLogChange}
+        wsCapture={wsCapture}
+        onWsCaptureChange={onWsCaptureChange}
         columns={columns}
         onColumnsChange={onColumnsChange}
         onClear={() => {

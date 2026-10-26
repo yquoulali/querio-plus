@@ -5,7 +5,7 @@ import '../styles/index.css';
 import { classifyEntry, parseGqlEntries, parseHttpEntry, resolveGraphqlError } from '../capture/parse-entry';
 import { add, clear, queuePatch } from '../capture/store';
 import { markSeen, resetSeenEntries } from '../capture/dedup';
-import { getPreserveLog, applyTheme } from '../settings';
+import { getPreserveLog, applyTheme, loadWsCapture } from '../settings';
 import { startWsCapture, stopWsCapture, setWsCaptureCallbacks, clearWsState } from '../capture/ws-capture';
 import type { HarEntry, CapturedEntry } from '../types';
 
@@ -151,6 +151,7 @@ function registerCapture(): void {
 /**
  * Initialize WebSocket capture via the background service worker.
  * This enables capturing GraphQL subscriptions over WebSocket.
+ * Only starts if the user has enabled WebSocket capture in settings.
  */
 function registerWebSocketCapture(): void {
   if (
@@ -176,14 +177,35 @@ function registerWebSocketCapture(): void {
     },
   );
 
-  // Start capturing WebSocket frames
-  void startWsCapture(tabId).then((started) => {
-    if (started) {
-      console.debug('Querio+: WebSocket capture started for tab', tabId);
-    } else {
-      console.debug('Querio+: WebSocket capture not available (debugger permission may be needed)');
+  // Check if WebSocket capture is enabled in settings
+  void loadWsCapture().then((enabled) => {
+    if (enabled) {
+      void startWsCapture(tabId).then((started) => {
+        if (started) {
+          console.debug('Querio+: WebSocket capture started for tab', tabId);
+        }
+      });
     }
   });
+
+  // Listen for toggle changes from the UI
+  window.addEventListener('querio-ws-capture-change', ((event: CustomEvent<boolean>) => {
+    if (event.detail) {
+      // Enable WebSocket capture
+      void startWsCapture(tabId).then((started) => {
+        if (started) {
+          console.debug('Querio+: WebSocket capture enabled');
+        } else {
+          console.warn('Querio+: Failed to enable WebSocket capture (debugger permission may be needed)');
+        }
+      });
+    } else {
+      // Disable WebSocket capture
+      void stopWsCapture().then(() => {
+        console.debug('Querio+: WebSocket capture disabled');
+      });
+    }
+  }) as EventListener);
 
   // Clean up on panel unload
   window.addEventListener('unload', () => {

@@ -88,14 +88,16 @@ Key improvements:
 
 ## Roadmap / Known Limitations
 
-### Advanced Features
+### WebSocket Subscriptions (Optional)
 
-The following features are available but require specific setup:
+Querio+ can capture GraphQL subscriptions over WebSocket. This feature is **off by default** because it requires Chrome's debugger API, which shows a notification banner.
 
-**WebSocket Subscriptions**: Querio+ can capture GraphQL subscriptions over WebSocket (both `graphql-ws` and `subscriptions-transport-ws` protocols). This requires the `debugger` permission, which Chrome will prompt for when you first open DevTools with the extension. The extension captures:
-- Subscription start/stop events
-- Real-time data messages
-- Errors and completion events
+To enable:
+1. Check the **WS** checkbox in the toolbar
+2. Chrome will show: *"Querio+ started debugging this browser"* — this is normal
+3. Subscriptions will now appear with a `GQL·SUB` badge
+
+Supports both `graphql-ws` (modern) and `subscriptions-transport-ws` (legacy) protocols.
 
 ## Contributing
 

@@ -23,6 +23,8 @@ export interface ToolbarProps {
   onThemeChange: (next: ThemeSetting) => void;
   preserveLog: boolean;
   onPreserveLogChange: (next: boolean) => void;
+  wsCapture: boolean;
+  onWsCaptureChange: (next: boolean) => void;
   columns: ReadonlyArray<ColumnKey>;
   onColumnsChange: (next: ColumnKey[]) => void;
   onClear: () => void;
@@ -159,6 +161,18 @@ export default function Toolbar(props: ToolbarProps): React.ReactElement {
       </span>
 
       <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+        <label
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12 }}
+          title="Capture GraphQL subscriptions over WebSocket (requires debugger attachment)"
+        >
+          <input
+            type="checkbox"
+            checked={props.wsCapture}
+            onChange={(e) => props.onWsCaptureChange(e.target.checked)}
+          />
+          WS
+        </label>
+
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
           <input
             type="checkbox"

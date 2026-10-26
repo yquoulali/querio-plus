@@ -11,6 +11,7 @@ const KEY_THEME = 'querio-plus:theme';
 const KEY_COLUMNS = 'querio-plus:columns';
 const KEY_COLUMN_WIDTHS = 'querio-plus:column-widths';
 const KEY_SPLIT = 'querio-plus:split-ratio';
+const KEY_WS_CAPTURE = 'querio-plus:ws-capture';
 
 /** Default pixel width per column (used until the user drags a column border). */
 export const DEFAULT_COLUMN_WIDTHS: Record<ColumnKey, number> = {
@@ -134,4 +135,26 @@ export function resolveSystemTheme(): 'light' | 'dark' {
 export function applyTheme(setting: ThemeSetting): void {
   const effective = setting === 'system' ? resolveSystemTheme() : setting;
   document.documentElement.setAttribute('data-theme', effective);
+}
+
+// ============================================================================
+// WebSocket Capture Setting
+// ============================================================================
+
+/**
+ * Load the WebSocket capture setting.
+ * Defaults to false (off) — user must explicitly enable it.
+ */
+export async function loadWsCapture(): Promise<boolean> {
+  if (!hasStorage()) return false;
+  return new Promise((resolve) => {
+    chrome.storage.local.get(KEY_WS_CAPTURE, (res) => {
+      const v = res[KEY_WS_CAPTURE] as boolean | undefined;
+      resolve(v === true);
+    });
+  });
+}
+
+export function saveWsCapture(value: boolean): void {
+  if (hasStorage()) chrome.storage.local.set({ [KEY_WS_CAPTURE]: value });
 }
