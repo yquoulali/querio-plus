@@ -25,6 +25,15 @@ search, JSON tree view, request comparison, and session export.
 
 ## Installation
 
+### From GitHub Releases (Recommended)
+
+1. Download the latest `querio-plus-vX.Y.Z.zip` from [Releases](https://github.com/yquoulali/querio-plus/releases)
+2. Unzip to a folder
+3. Go to `chrome://extensions`
+4. Enable **Developer mode**
+5. Click **Load unpacked** → select the unzipped folder
+6. Open DevTools (F12) → find the **Querio+** tab
+
 ### From Source
 
 ```bash
@@ -52,6 +61,9 @@ pnpm dev         # Watch mode for development
 pnpm build       # Production build
 pnpm test        # Run tests
 pnpm typecheck   # TypeScript check
+pnpm package     # Create ZIP for Chrome Web Store
+pnpm release     # Build, test, and publish to GitHub Releases
+pnpm release:dry # Dry run (no publish)
 ```
 
 ## How It Works
