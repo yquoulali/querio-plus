@@ -6,7 +6,8 @@ import { classifyEntry, parseGqlEntries, parseHttpEntry, resolveGraphqlError } f
 import { add, clear, queuePatch } from '../capture/store';
 import { markSeen, resetSeenEntries } from '../capture/dedup';
 import { getPreserveLog, applyTheme } from '../settings';
-import type { HarEntry } from '../types';
+import { startWsCapture, stopWsCapture, setWsCaptureCallbacks, clearWsState } from '../capture/ws-capture';
+import type { HarEntry, CapturedEntry } from '../types';
 
 // Flash-avoidance (P8), CSP-compliant: this external module script runs before React
 // paints, so apply the 'system' theme (the DevTools panel's own themeName) synchronously
@@ -138,9 +139,56 @@ function registerCapture(): void {
       if (!getPreserveLog()) {
         clear();
         resetSeenEntries();
+        clearWsState();
       }
     });
   }
+
+  // Start WebSocket capture for subscriptions
+  registerWebSocketCapture();
+}
+
+/**
+ * Initialize WebSocket capture via the background service worker.
+ * This enables capturing GraphQL subscriptions over WebSocket.
+ */
+function registerWebSocketCapture(): void {
+  if (
+    typeof chrome === 'undefined' ||
+    !chrome.devtools ||
+    !chrome.devtools.inspectedWindow
+  ) {
+    return;
+  }
+
+  const tabId = chrome.devtools.inspectedWindow.tabId;
+  if (!tabId) return;
+
+  // Set up callbacks for WebSocket-captured entries
+  setWsCaptureCallbacks(
+    // onEntry: add new subscription to the store
+    (entry: CapturedEntry) => {
+      add(entry);
+    },
+    // onUpdate: update subscription with new data
+    (id: string, update: Partial<CapturedEntry>) => {
+      queuePatch(id, update);
+    },
+  );
+
+  // Start capturing WebSocket frames
+  void startWsCapture(tabId).then((started) => {
+    if (started) {
+      console.debug('Querio+: WebSocket capture started for tab', tabId);
+    } else {
+      console.debug('Querio+: WebSocket capture not available (debugger permission may be needed)');
+    }
+  });
+
+  // Clean up on panel unload
+  window.addEventListener('unload', () => {
+    void stopWsCapture();
+  });
 }
 
 registerCapture();

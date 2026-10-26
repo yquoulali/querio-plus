@@ -38,13 +38,19 @@ function statusColor(status: number): string {
 function badgeFor(entry: CapturedEntry): { label: string; color: string; title: string } {
   if (entry.kind === 'graphql') {
     const type = entry.operation?.type ?? 'query';
+    // Check for WebSocket subscription (method === 'WS')
+    if (entry.method === 'WS' || type === 'subscription') {
+      return {
+        label: 'GQL·SUB',
+        color: 'var(--gql-subscription)',
+        title: `GraphQL subscription${entry.method === 'WS' ? ' (WebSocket)' : ` (${entry.method})`}`,
+      };
+    }
     const color =
       type === 'mutation'
         ? 'var(--gql-mutation)'
-        : type === 'subscription'
-          ? 'var(--gql-subscription)'
-          : 'var(--gql-query)';
-    const short = type === 'mutation' ? 'MUT' : type === 'subscription' ? 'SUB' : 'QRY';
+        : 'var(--gql-query)';
+    const short = type === 'mutation' ? 'MUT' : 'QRY';
     return { label: `GQL·${short}`, color, title: `GraphQL ${type} (${entry.method})` };
   }
   const method = entry.method.toUpperCase();

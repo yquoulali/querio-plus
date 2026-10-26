@@ -20,10 +20,19 @@ export default defineManifest({
   name: 'Querio+',
   version: pkg.version,
   description: 'GraphQL & HTTP request inspector (DevTools panel).',
-  // F3 (design-review F4 earlier): copy-only needs clipboardWrite; storage backs
-  // persisted settings (theme, columns, preserve-log).
-  permissions: ['storage', 'clipboardWrite'],
+  // Permissions:
+  // - storage: persisted settings (theme, columns, preserve-log)
+  // - clipboardWrite: copy-only needs clipboardWrite
+  // - debugger: required to capture WebSocket frames for GraphQL subscriptions
+  permissions: ['storage', 'clipboardWrite', 'debugger'],
   devtools_page: 'src/devtools/devtools.html',
+  // Background service worker for WebSocket capture via chrome.debugger.
+  // The devtools panel cannot directly use chrome.debugger, so we need
+  // a background script that attaches to the inspected tab and forwards frames.
+  background: {
+    service_worker: 'src/background/service-worker.ts',
+    type: 'module',
+  },
   action: {
     default_popup: 'index.html',
   },

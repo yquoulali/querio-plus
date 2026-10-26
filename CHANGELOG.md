@@ -9,9 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **WebSocket Subscriptions** — Capture GraphQL subscriptions over WebSocket
+  - Supports both `graphql-ws` (modern) and `subscriptions-transport-ws` (legacy) protocols
+  - Real-time capture of subscription start, data, error, and complete messages
+  - Background service worker attaches debugger to capture WebSocket frames
+  - Subscriptions appear in the request list with `GQL·SUB` badge
 - Multipart form-data GraphQL detection (file uploads per graphql-multipart-request-spec)
 - Incognito mode support (`incognito: "split"` in manifest)
 - Packaging script for Chrome Web Store distribution
+
+### Changed
+
+- Added `debugger` permission (required for WebSocket capture)
+- Background service worker added for WebSocket frame interception
 
 ### Fixed
 
@@ -19,8 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-- Added WebSocket subscriptions to roadmap (not yet implemented - Querio #1)
-- Documented all 10 original Querio issues and their fix status in README
+- Updated README with WebSocket subscription feature
+- All 10 original Querio issues now addressed
 
 ## [0.1.0] - 2024-10-26
 

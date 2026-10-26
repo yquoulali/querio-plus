@@ -12,6 +12,7 @@ search, JSON tree view, request comparison, and session export.
 ## Features
 
 - 🔍 **GraphQL Detection** — Automatically detects GraphQL operations (queries, mutations, subscriptions)
+- 🔌 **WebSocket Subscriptions** — Captures real-time GraphQL subscriptions (graphql-ws & subscriptions-transport-ws)
 - 📦 **Batch Splitting** — Splits batched GraphQL arrays into individual operations
 - 🎯 **Smart Filtering** — Filter by name, URL, status, type, or errors only
 - 🔎 **Full-text Search** — Search across request and response bodies
@@ -83,20 +84,18 @@ Key improvements:
 | Memory bounds | — | ✅ No freeze on large payloads |
 | Multipart uploads | ❌ | ✅ GraphQL file upload detection |
 | Incognito mode | ❌ | ✅ Works in private browsing |
+| WebSocket subscriptions | ❌ | ✅ Real-time subscription capture |
 
 ## Roadmap / Known Limitations
 
-### WebSocket Subscriptions
+### Advanced Features
 
-Currently, Querio+ captures HTTP requests only via `chrome.devtools.network`. GraphQL subscriptions
-that run over WebSocket (e.g., `graphql-ws` or `subscriptions-transport-ws`) are not captured.
+The following features are available but require specific setup:
 
-This is a significant feature that would require:
-- Listening to `chrome.debugger` or `chrome.webRequest` for WebSocket frames
-- Parsing the GraphQL-over-WebSocket protocol messages
-- Correlating subscription start/data/complete frames
-
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
+**WebSocket Subscriptions**: Querio+ can capture GraphQL subscriptions over WebSocket (both `graphql-ws` and `subscriptions-transport-ws` protocols). This requires the `debugger` permission, which Chrome will prompt for when you first open DevTools with the extension. The extension captures:
+- Subscription start/stop events
+- Real-time data messages
+- Errors and completion events
 
 ## Contributing
 
