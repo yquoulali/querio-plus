@@ -81,6 +81,22 @@ Key improvements:
 | Resizable columns | ❌ | ✅ Persistent widths |
 | De-duplication | ❌ | ✅ Handles Chrome double-delivery |
 | Memory bounds | — | ✅ No freeze on large payloads |
+| Multipart uploads | ❌ | ✅ GraphQL file upload detection |
+| Incognito mode | ❌ | ✅ Works in private browsing |
+
+## Roadmap / Known Limitations
+
+### WebSocket Subscriptions
+
+Currently, Querio+ captures HTTP requests only via `chrome.devtools.network`. GraphQL subscriptions
+that run over WebSocket (e.g., `graphql-ws` or `subscriptions-transport-ws`) are not captured.
+
+This is a significant feature that would require:
+- Listening to `chrome.debugger` or `chrome.webRequest` for WebSocket frames
+- Parsing the GraphQL-over-WebSocket protocol messages
+- Correlating subscription start/data/complete frames
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contributing
 

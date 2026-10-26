@@ -126,3 +126,76 @@ describe('detectGraphQL GET without Content-Type', () => {
     expect(d.operation?.name).toBe('Q');
   });
 });
+
+describe('detectGraphQL multipart/form-data (file uploads)', () => {
+  const multipartHeaders = [
+    { name: 'content-type', value: 'multipart/form-data; boundary=----WebKitFormBoundary' },
+  ];
+
+  it('15. multipart with operations field (graphql-multipart-request-spec)', () => {
+    const d = detectGraphQL({
+      method: 'POST',
+      headers: multipartHeaders,
+      multipartParts: [
+        {
+          name: 'operations',
+          value: JSON.stringify({
+            query: 'mutation Upload($file: Upload!) { uploadFile(file: $file) { id } }',
+            operationName: 'Upload',
+            variables: { file: null },
+          }),
+        },
+        { name: 'map', value: '{ "0": ["variables.file"] }' },
+        { name: '0', value: '[file content]' },
+      ],
+    });
+    expect(d.isGraphQL).toBe(true);
+    expect(d.reason).toBe('multipart-form-data-query');
+    expect(d.operation?.type).toBe('mutation');
+    expect(d.operation?.name).toBe('Upload');
+  });
+
+  it('16. multipart with direct query field (legacy fallback)', () => {
+    const d = detectGraphQL({
+      method: 'POST',
+      headers: multipartHeaders,
+      multipartParts: [
+        { name: 'query', value: 'mutation M { doIt }' },
+        { name: 'operationName', value: 'M' },
+      ],
+    });
+    expect(d.isGraphQL).toBe(true);
+    expect(d.reason).toBe('multipart-form-data-query');
+    expect(d.operation?.type).toBe('mutation');
+  });
+
+  it('17. multipart without valid GraphQL -> not graphql', () => {
+    const d = detectGraphQL({
+      method: 'POST',
+      headers: multipartHeaders,
+      multipartParts: [{ name: 'file', value: 'binary content' }],
+    });
+    expect(d.isGraphQL).toBe(false);
+    expect(d.reason).toBe('no-query-field');
+  });
+
+  it('18. multipart with malformed operations JSON -> not graphql', () => {
+    const d = detectGraphQL({
+      method: 'POST',
+      headers: multipartHeaders,
+      multipartParts: [{ name: 'operations', value: 'not valid json' }],
+    });
+    expect(d.isGraphQL).toBe(false);
+    expect(d.reason).toBe('no-query-field');
+  });
+
+  it('19. multipart with empty multipartParts -> not graphql', () => {
+    const d = detectGraphQL({
+      method: 'POST',
+      headers: multipartHeaders,
+      multipartParts: [],
+    });
+    expect(d.isGraphQL).toBe(false);
+    expect(d.reason).toBe('no-query-field');
+  });
+});

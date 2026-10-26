@@ -63,6 +63,13 @@ function buildDetectable(entry: HarEntry): {
 
   const formParams = postData?.params ? decodeParams(postData.params) : undefined;
 
+  // For multipart/form-data, HAR stores parts as postData.params[].
+  // Each param has { name, value } where value is the text content of that part.
+  // This is how Chrome DevTools exposes multipart data in HAR format.
+  const multipartParts = isContentType(headers, 'multipart/form-data')
+    ? formParams
+    : undefined;
+
   const detectable: DetectableRequest = {
     method,
     headers,
@@ -70,6 +77,7 @@ function buildDetectable(entry: HarEntry): {
     bodyText,
     parsedBody: parsedBodyOk ? parsedBody : undefined,
     formParams,
+    multipartParts,
     operationName:
       decodeOnce(getParamValue('operationName', decodedQuery)) ??
       (formParams ? decodeOnce(getParamValue('operationName', formParams)) : undefined),

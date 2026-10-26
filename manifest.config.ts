@@ -32,4 +32,7 @@ export default defineManifest({
     '48': 'icons/48.png',
     '128': 'icons/128.png',
   },
+  // Enable the extension in incognito mode (fixes Querio issue #8).
+  // "split" gives each incognito session its own isolated storage.
+  incognito: 'split',
 });

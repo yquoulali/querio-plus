@@ -44,6 +44,12 @@ export interface DetectableRequest {
   parsedBody?: unknown;
   /** form params when content-type is x-www-form-urlencoded (already decoded by caller) */
   formParams?: ReadonlyArray<{ name: string; value: string }>;
+  /**
+   * Multipart form data parts, extracted by the caller when content-type is multipart/form-data.
+   * The "operations" part contains the GraphQL query JSON, and "map" contains file mappings.
+   * See: https://github.com/jaydenseric/graphql-multipart-request-spec
+   */
+  multipartParts?: ReadonlyArray<{ name: string; value: string }>;
   /** transport-level operationName sibling of query; second-precedence name source */
   operationName?: string;
 }
@@ -53,6 +59,7 @@ export type DetectReason =
   | 'json-post-query'
   | 'json-post-batch'
   | 'form-urlencoded-query'
+  | 'multipart-form-data-query'
   | 'not-json-content-type'
   | 'no-query-field'
   | 'invalid-json'
@@ -199,6 +206,42 @@ export function detectGraphQL(request: DetectableRequest): GraphQLDetection {
     const opName =
       request.operationName ?? getParamValue('operationName', request.formParams);
     return result('form-urlencoded-query', query, opName);
+  }
+
+  // Multipart form data (GraphQL file uploads per graphql-multipart-request-spec).
+  // The "operations" field contains JSON with the GraphQL query; "map" contains file mappings.
+  // See: https://github.com/jaydenseric/graphql-multipart-request-spec
+  if (isContentType(headers, 'multipart/form-data')) {
+    // First check if caller pre-parsed multipart parts
+    if (request.multipartParts && request.multipartParts.length > 0) {
+      const operationsValue = getParamValue('operations', request.multipartParts);
+      if (operationsValue) {
+        try {
+          const operations = JSON.parse(operationsValue) as {
+            query?: string;
+            operationName?: string;
+          };
+          if (operations.query) {
+            return result(
+              'multipart-form-data-query',
+              operations.query,
+              request.operationName ?? operations.operationName,
+            );
+          }
+        } catch {
+          // Not valid JSON in operations field
+        }
+      }
+      // Fallback: check for direct query field in multipart (less common)
+      const directQuery = getParamValue('query', request.multipartParts);
+      if (directQuery) {
+        const opName =
+          request.operationName ?? getParamValue('operationName', request.multipartParts);
+        return result('multipart-form-data-query', directQuery, opName);
+      }
+    }
+    // No valid GraphQL found in multipart
+    return { isGraphQL: false, reason: 'no-query-field' };
   }
 
   return { isGraphQL: false, reason: 'not-json-content-type' };
