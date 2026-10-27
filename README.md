@@ -63,9 +63,21 @@ pnpm build       # Production build
 pnpm test        # Run tests
 pnpm typecheck   # TypeScript check
 pnpm package     # Create ZIP for Chrome Web Store
-pnpm release     # Build, test, and publish to GitHub Releases
-pnpm release:dry # Dry run (no publish)
 ```
+
+### Releasing
+
+```bash
+pnpm release 0.3.0   # Build, test, and publish v0.3.0 to GitHub Releases
+pnpm release         # Use version from package.json
+pnpm release:dry     # Dry run (build + package only, no publish)
+```
+
+The release script:
+- Runs tests and builds the extension
+- Creates a versioned ZIP (`querio-plus-vX.Y.Z.zip`)
+- Generates changelog from commits since the previous tag
+- Publishes to GitHub Releases with the ZIP attached
 
 ## How It Works
 
