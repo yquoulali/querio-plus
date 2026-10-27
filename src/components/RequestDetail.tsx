@@ -3,7 +3,7 @@ import type { CapturedEntry } from '../types';
 import JsonTree from './JsonTree';
 import GraphQLView from './GraphQLView';
 import { patch } from '../capture/store';
-import { toCurl, copyOperation, copyResponse } from '../features/copy';
+import { toCurl, copyOperation, copyResponse, copyQuery, copyVariables } from '../features/copy';
 
 type Tab = 'general' | 'headers' | 'query' | 'response';
 
@@ -299,7 +299,7 @@ export default function RequestDetail({
         )}
 
         {tab === 'headers' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', gap: '4px 16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'max-content 1fr max-content', gap: '4px 16px', alignItems: 'start' }}>
             {entry.requestHeaders.map((h, i) => (
               <React.Fragment key={i}>
                 <span className="mono" style={{ color: 'var(--text-muted)' }}>
@@ -308,6 +308,7 @@ export default function RequestDetail({
                 <span className="mono" style={{ wordBreak: 'break-all' }}>
                   {h.value}
                 </span>
+                <CopyButton label="copy" text={h.value} />
               </React.Fragment>
             ))}
           </div>
@@ -317,6 +318,9 @@ export default function RequestDetail({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {entry.query && (
               <CollapsibleSection title="Query" defaultOpen={true}>
+                <div style={{ marginBottom: 8 }}>
+                  <CopyButton label="copy query" text={copyQuery(entry.query)} />
+                </div>
                 <GraphQLView query={entry.query} />
               </CollapsibleSection>
             )}
@@ -334,7 +338,12 @@ export default function RequestDetail({
               {entry.variables === undefined ? (
                 <span style={{ color: 'var(--text-muted)' }}>—</span>
               ) : (
-                <JsonTree value={entry.variables} />
+                <>
+                  <div style={{ marginBottom: 8 }}>
+                    <CopyButton label="copy variables" text={copyVariables(entry.variables)} />
+                  </div>
+                  <JsonTree value={entry.variables} />
+                </>
               )}
             </CollapsibleSection>
           </div>

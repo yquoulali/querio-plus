@@ -50,3 +50,13 @@ export function copyOperation(entry: CapturedEntry): string {
 export function copyResponse(body: unknown): string {
   return formatJson(body);
 }
+
+/** Copy just the pretty-printed query. */
+export function copyQuery(query: string): string {
+  return printGraphQL(query);
+}
+
+/** Copy just the variables as formatted JSON. */
+export function copyVariables(variables: unknown): string {
+  return formatJson(variables);
+}
