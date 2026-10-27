@@ -168,14 +168,16 @@ function createZip(version) {
 }
 
 function generateReleaseNotes(version) {
-  // Try to get commits since last tag
+  // Get commits since last tag for the changelog
   let commits = '';
+  let lastTag = '';
   try {
-    const lastTag = run('git describe --tags --abbrev=0 2>/dev/null || echo ""', { silent: true });
+    lastTag = run('git describe --tags --abbrev=0 2>/dev/null || echo ""', { silent: true });
     if (lastTag) {
-      commits = run(`git log ${lastTag}..HEAD --oneline`, { silent: true });
+      commits = run(`git log ${lastTag}..HEAD --pretty=format:"- %s" --no-merges`, { silent: true });
     } else {
-      commits = run('git log --oneline -20', { silent: true });
+      // First release - get recent commits
+      commits = run('git log --pretty=format:"- %s" --no-merges -20', { silent: true });
     }
   } catch {
     commits = '';
@@ -183,23 +185,17 @@ function generateReleaseNotes(version) {
 
   const notes = `## Querio+ v${version}
 
-### What's New
-- Chrome DevTools extension for GraphQL and HTTP request inspection
-- Real-time request capture and filtering
-- JSON tree view with expandable nodes
-- Request comparison (diff view)
-- Session export (HAR/JSON)
-- Light/Dark/System theme support
-- WebSocket subscription capture (opt-in)
+${lastTag ? `### Changes since ${lastTag}` : '### Changes'}
+
+${commits || '- Initial release'}
 
 ### Installation
+
 1. Download \`querio-plus-v${version}.zip\` below
 2. Unzip to a folder
 3. Go to \`chrome://extensions\`
 4. Enable "Developer mode"
 5. Click "Load unpacked" and select the unzipped folder
-
-${commits ? `### Recent Changes\n\`\`\`\n${commits}\n\`\`\`` : ''}
 `;
 
   return notes;
