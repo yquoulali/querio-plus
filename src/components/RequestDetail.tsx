@@ -22,6 +22,62 @@ function writeClipboard(text: string): void {
   }
 }
 
+/** Collapsible section with a header that toggles content visibility */
+function CollapsibleSection({
+  title,
+  defaultOpen = true,
+  badge,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+}): React.ReactElement {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          width: '100%',
+          padding: '8px 0',
+          border: 'none',
+          background: 'transparent',
+          color: 'var(--text)',
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 600,
+          textAlign: 'left',
+        }}
+      >
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 16,
+            height: 16,
+            fontSize: 10,
+            color: 'var(--text-muted)',
+            transition: 'transform 0.15s',
+            transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
+          }}
+        >
+          ▶
+        </span>
+        <span>{title}</span>
+        {badge}
+      </button>
+      {open && <div style={{ marginLeft: 24 }}>{children}</div>}
+    </div>
+  );
+}
+
 function TabButton({
   label,
   active,
@@ -258,31 +314,29 @@ export default function RequestDetail({
         )}
 
         {tab === 'query' && entry.kind === 'graphql' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {entry.query && <GraphQLView query={entry.query} />}
-            <div>
-              <div
-                style={{
-                  color: 'var(--text-muted)',
-                  marginBottom: 6,
-                  display: 'flex',
-                  gap: 8,
-                  alignItems: 'center',
-                }}
-              >
-                Variables
-                {variablesIsRawString && (
-                  <span style={{ color: 'var(--color-warning)', fontSize: 11 }}>
-                    could not parse variables
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {entry.query && (
+              <CollapsibleSection title="Query" defaultOpen={true}>
+                <GraphQLView query={entry.query} />
+              </CollapsibleSection>
+            )}
+            <CollapsibleSection
+              title="Variables"
+              defaultOpen={true}
+              badge={
+                variablesIsRawString ? (
+                  <span style={{ color: 'var(--color-warning)', fontSize: 11, fontWeight: 400 }}>
+                    could not parse
                   </span>
-                )}
-              </div>
+                ) : undefined
+              }
+            >
               {entry.variables === undefined ? (
                 <span style={{ color: 'var(--text-muted)' }}>—</span>
               ) : (
                 <JsonTree value={entry.variables} />
               )}
-            </div>
+            </CollapsibleSection>
           </div>
         )}
 
