@@ -10,6 +10,7 @@ import Toolbar from '../components/Toolbar';
 import RequestList from '../components/RequestList';
 import RequestDetail from '../components/RequestDetail';
 import DiffModal from '../components/DiffModal';
+import WaterfallView from '../components/WaterfallView';
 import { getSnapshot, subscribe, clear, replaceAll } from '../capture/store';
 import { resetSeenEntries } from '../capture/dedup';
 import { applyFilter, emptyFilter, type FilterState } from '../features/filter';
@@ -21,17 +22,20 @@ import {
   loadColumnWidths,
   loadSplitRatio,
   loadTheme,
+  loadViewMode,
   loadWsCapture,
   saveColumns,
   saveColumnWidths,
   saveSplitRatio,
   saveTheme,
+  saveViewMode,
   saveWsCapture,
   setPreserveLog as setPreserveLogGlobal,
   DEFAULT_COLUMNS,
   DEFAULT_COLUMN_WIDTHS,
   type ColumnKey,
   type ThemeSetting,
+  type ViewMode,
 } from '../settings';
 import type { CapturedEntry } from '../types';
 
@@ -68,6 +72,7 @@ export default function App(): React.ReactElement {
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const [diffState, setDiffState] = useState<DiffState>({ left: null, selecting: false });
   const [diffRight, setDiffRight] = useState<CapturedEntry | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const splitContainerRef = useRef<HTMLDivElement>(null);
 
   // Load persisted settings once on mount; apply stored theme over the inline bootstrap (P8).
@@ -80,6 +85,7 @@ export default function App(): React.ReactElement {
     void loadColumnWidths().then(setColumnWidths);
     void loadSplitRatio().then(setSplitRatio);
     void loadWsCapture().then(setWsCapture);
+    void loadViewMode().then(setViewMode);
   }, []);
 
   const onColumnWidthChange = useCallback((col: ColumnKey, width: number) => {
@@ -138,6 +144,11 @@ export default function App(): React.ReactElement {
     saveWsCapture(next);
     // Notify main.tsx to start/stop WebSocket capture
     window.dispatchEvent(new CustomEvent('querio-ws-capture-change', { detail: next }));
+  };
+
+  const onViewModeChange = (next: ViewMode) => {
+    setViewMode(next);
+    saveViewMode(next);
   };
 
   // Full-text search (F7): match already-cached response bodies (resolved cache value
@@ -224,6 +235,8 @@ export default function App(): React.ReactElement {
         onPreserveLogChange={onPreserveLogChange}
         wsCapture={wsCapture}
         onWsCaptureChange={onWsCaptureChange}
+        viewMode={viewMode}
+        onViewModeChange={onViewModeChange}
         columns={columns}
         onColumnsChange={onColumnsChange}
         onClear={() => {
@@ -273,22 +286,31 @@ export default function App(): React.ReactElement {
       <div ref={splitContainerRef} style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         <div
           style={{
-            flex: selected ? `0 0 ${(splitRatio * 100).toFixed(2)}%` : '1 1 100%',
+            flex: selected && viewMode === 'list' ? `0 0 ${(splitRatio * 100).toFixed(2)}%` : '1 1 100%',
             minWidth: 0,
           }}
         >
-          <RequestList
-            entries={filtered}
-            columns={columns}
-            columnWidths={columnWidths}
-            onColumnWidthChange={onColumnWidthChange}
-            selectedId={selectedId}
-            onSelect={onSelectForDiff}
-            totalCount={entries.length}
-            diffSelectingId={diffState.selecting ? diffState.left?.id : undefined}
-          />
+          {viewMode === 'list' ? (
+            <RequestList
+              entries={filtered}
+              columns={columns}
+              columnWidths={columnWidths}
+              onColumnWidthChange={onColumnWidthChange}
+              selectedId={selectedId}
+              onSelect={onSelectForDiff}
+              totalCount={entries.length}
+              diffSelectingId={diffState.selecting ? diffState.left?.id : undefined}
+            />
+          ) : (
+            <WaterfallView
+              entries={filtered}
+              selectedId={selectedId}
+              onSelect={onSelectForDiff}
+              diffSelectingId={diffState.selecting ? diffState.left?.id : undefined}
+            />
+          )}
         </div>
-        {selected && !diffState.selecting && (
+        {selected && !diffState.selecting && viewMode === 'list' && (
           <>
             <div
               onPointerDown={onGutterPointerDown}

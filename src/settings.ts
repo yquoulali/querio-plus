@@ -1,4 +1,5 @@
 export type ThemeSetting = 'system' | 'light' | 'dark';
+export type ViewMode = 'list' | 'waterfall';
 export type ColumnKey = 'kind' | 'name' | 'type' | 'status' | 'size' | 'time' | 'url';
 
 export const ALL_COLUMNS: ColumnKey[] = ['kind', 'name', 'type', 'status', 'size', 'time', 'url'];
@@ -12,6 +13,7 @@ const KEY_COLUMNS = 'querio-plus:columns';
 const KEY_COLUMN_WIDTHS = 'querio-plus:column-widths';
 const KEY_SPLIT = 'querio-plus:split-ratio';
 const KEY_WS_CAPTURE = 'querio-plus:ws-capture';
+const KEY_VIEW_MODE = 'querio-plus:view-mode';
 
 /** Default pixel width per column (used until the user drags a column border). */
 export const DEFAULT_COLUMN_WIDTHS: Record<ColumnKey, number> = {
@@ -157,4 +159,26 @@ export async function loadWsCapture(): Promise<boolean> {
 
 export function saveWsCapture(value: boolean): void {
   if (hasStorage()) chrome.storage.local.set({ [KEY_WS_CAPTURE]: value });
+}
+
+// ============================================================================
+// View Mode Setting
+// ============================================================================
+
+/**
+ * Load the view mode setting.
+ * Defaults to 'list'.
+ */
+export async function loadViewMode(): Promise<ViewMode> {
+  if (!hasStorage()) return 'list';
+  return new Promise((resolve) => {
+    chrome.storage.local.get(KEY_VIEW_MODE, (res) => {
+      const v = res[KEY_VIEW_MODE] as ViewMode | undefined;
+      resolve(v === 'waterfall' ? 'waterfall' : 'list');
+    });
+  });
+}
+
+export function saveViewMode(value: ViewMode): void {
+  if (hasStorage()) chrome.storage.local.set({ [KEY_VIEW_MODE]: value });
 }

@@ -19,6 +19,7 @@ search, JSON tree view, request comparison, and session export.
 - 🌳 **JSON Tree View** — Collapsible, syntax-highlighted response viewer
 - 📋 **Copy Actions** — Copy as cURL, operation, or response
 - ⚖️ **Request Diff** — Compare responses, queries, variables, and headers between requests
+- 📊 **Waterfall View** — Timeline visualization showing request timing breakdown (DNS, connect, SSL, wait, receive)
 - 💾 **Session Export** — Export/import sessions as JSON
 - 🎨 **Themes** — Light, dark, and system theme support
 - ⌨️ **Keyboard Navigation** — Browse requests with arrow keys
@@ -97,6 +98,7 @@ Key improvements:
 | Multipart uploads | ❌ | ✅ GraphQL file upload detection |
 | Incognito mode | ❌ | ✅ Works in private browsing |
 | WebSocket subscriptions | ❌ | ✅ Real-time subscription capture |
+| Waterfall view | ❌ | ✅ Request timing visualization |
 
 ## Roadmap / Known Limitations
 

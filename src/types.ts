@@ -29,6 +29,20 @@ export interface HeaderPair {
 export type ErrorState = 'error' | 'ok' | 'pending';
 
 /**
+ * HAR timing breakdown for waterfall visualization.
+ * Values are in milliseconds. -1 means "not applicable" (e.g., DNS reused from cache).
+ */
+export interface RequestTimings {
+  blocked: number;  // Time spent in browser queue
+  dns: number;      // DNS lookup
+  connect: number;  // TCP connection
+  ssl: number;      // SSL/TLS handshake
+  send: number;     // Sending request
+  wait: number;     // TTFB (time to first byte)
+  receive: number;  // Downloading response
+}
+
+/**
  * The single normalized shape that flows out of parse-entry.ts into the store and
  * drives the whole UI. GraphQL-only fields are `undefined` when kind === 'http'.
  */
@@ -70,6 +84,10 @@ export interface CapturedEntry {
   errorState: ErrorState;
   errorCount?: number; // number of GraphQL errors[], undefined for HTTP-only errors (badge '!')
 
+  // --- timing data for waterfall visualization ---
+  startedDateTime?: string; // ISO 8601 timestamp of request start
+  timings?: RequestTimings; // Detailed timing breakdown
+
   // --- lazy body access ---
   getResponseBody: () => Promise<unknown>; // cached per id
   responseBody?: unknown; // inlined for imported entries + resolved cache value
@@ -102,6 +120,20 @@ export interface HarResponse {
   content: HarContent;
 }
 
+/**
+ * HAR timing object as provided by Chrome DevTools.
+ */
+export interface HarTimings {
+  blocked?: number;
+  dns?: number;
+  connect?: number;
+  ssl?: number;
+  send?: number;
+  wait?: number;
+  receive?: number;
+  _blocked_queueing?: number;
+}
+
 export interface HarEntry {
   _resourceType?: string;
   /**
@@ -113,6 +145,7 @@ export interface HarEntry {
   _requestId?: string | number;
   time: number;
   startedDateTime?: string;
+  timings?: HarTimings;
   request: HarRequest;
   response: HarResponse;
   /**

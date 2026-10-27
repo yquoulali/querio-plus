@@ -2,6 +2,7 @@ import type {
   CapturedEntry,
   HarEntry,
   HeaderPair,
+  RequestTimings,
 } from '../types';
 import type { BatchInputOperation, SplitOperation } from './batch-split';
 import type { DetectableRequest, GraphQLOperationMeta } from './graphql-detect';
@@ -139,6 +140,21 @@ function sizeFrom(entry: HarEntry): number | undefined {
   return typeof s === 'number' && s > 0 ? s : undefined;
 }
 
+/** Extract timing breakdown from HAR entry for waterfall visualization. */
+function parseTimings(entry: HarEntry): RequestTimings | undefined {
+  const t = entry.timings;
+  if (!t) return undefined;
+  return {
+    blocked: typeof t.blocked === 'number' ? t.blocked : -1,
+    dns: typeof t.dns === 'number' ? t.dns : -1,
+    connect: typeof t.connect === 'number' ? t.connect : -1,
+    ssl: typeof t.ssl === 'number' ? t.ssl : -1,
+    send: typeof t.send === 'number' ? t.send : -1,
+    wait: typeof t.wait === 'number' ? t.wait : -1,
+    receive: typeof t.receive === 'number' ? t.receive : -1,
+  };
+}
+
 function urlPathname(url: string): string {
   try {
     return new URL(url).pathname;
@@ -267,6 +283,8 @@ export function parseGqlEntries(entry: HarEntry): CapturedEntry[] {
       time: entry.time,
       size: baseSize,
       errorState: 'pending' as const,
+      startedDateTime: entry.startedDateTime,
+      timings: parseTimings(entry),
       getResponseBody,
     } satisfies CapturedEntry;
   });
@@ -292,6 +310,8 @@ export function parseHttpEntry(entry: HarEntry): CapturedEntry {
     time: entry.time,
     size: sizeFrom(entry),
     errorState: isError ? 'error' : 'ok',
+    startedDateTime: entry.startedDateTime,
+    timings: parseTimings(entry),
     getResponseBody: getContent,
   };
 }

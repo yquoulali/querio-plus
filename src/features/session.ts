@@ -1,4 +1,4 @@
-import type { CapturedEntry, HeaderPair } from '../types';
+import type { CapturedEntry, HeaderPair, RequestTimings } from '../types';
 
 /**
  * HAR-like export shape. We keep a `log.entries[]` envelope so it reads like a HAR file,
@@ -29,6 +29,9 @@ export interface SessionEntryExport {
     errorCount?: number;
     responseBody?: unknown;
     operation?: CapturedEntry['operation'];
+    // Timing data for waterfall visualization
+    startedDateTime?: string;
+    timings?: RequestTimings;
   };
 }
 
@@ -96,6 +99,8 @@ function buildExport(entries: ReadonlyArray<CapturedEntry>): SessionExport {
           errorCount: e.errorCount,
           responseBody: e.responseBody,
           operation: e.operation,
+          startedDateTime: e.startedDateTime,
+          timings: e.timings,
         },
       })),
     },
@@ -166,7 +171,38 @@ export function importSession(json: unknown): CapturedEntry[] {
         // imported bodies are inlined: getResponseBody resolves without getContent.
         responseBody: body,
         getResponseBody: () => Promise.resolve(body),
+        // Timing data for waterfall
+        startedDateTime: typeof q.startedDateTime === 'string' ? q.startedDateTime : undefined,
+        timings: parseImportedTimings(q.timings),
       };
     })
     .filter((e): e is CapturedEntry => e !== undefined);
+}
+
+/** Safely parse timing data from import, validating each field */
+function parseImportedTimings(timings: unknown): RequestTimings | undefined {
+  if (!timings || typeof timings !== 'object') return undefined;
+  const t = timings as Record<string, unknown>;
+  const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+  // At least one timing field must be valid
+  if (
+    !isNum(t.blocked) &&
+    !isNum(t.dns) &&
+    !isNum(t.connect) &&
+    !isNum(t.ssl) &&
+    !isNum(t.send) &&
+    !isNum(t.wait) &&
+    !isNum(t.receive)
+  ) {
+    return undefined;
+  }
+  return {
+    blocked: isNum(t.blocked) ? t.blocked : -1,
+    dns: isNum(t.dns) ? t.dns : -1,
+    connect: isNum(t.connect) ? t.connect : -1,
+    ssl: isNum(t.ssl) ? t.ssl : -1,
+    send: isNum(t.send) ? t.send : -1,
+    wait: isNum(t.wait) ? t.wait : -1,
+    receive: isNum(t.receive) ? t.receive : -1,
+  };
 }

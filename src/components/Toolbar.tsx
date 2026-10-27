@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import type { FilterState, TypeFilter } from '../features/filter';
-import type { ColumnKey, ThemeSetting } from '../settings';
+import type { ColumnKey, ThemeSetting, ViewMode } from '../settings';
 import { ALL_COLUMNS } from '../settings';
 
 const TYPE_OPTIONS: TypeFilter[] = ['query', 'mutation', 'subscription', 'http'];
@@ -25,6 +25,8 @@ export interface ToolbarProps {
   onPreserveLogChange: (next: boolean) => void;
   wsCapture: boolean;
   onWsCaptureChange: (next: boolean) => void;
+  viewMode: ViewMode;
+  onViewModeChange: (next: ViewMode) => void;
   columns: ReadonlyArray<ColumnKey>;
   onColumnsChange: (next: ColumnKey[]) => void;
   onClear: () => void;
@@ -161,6 +163,43 @@ export default function Toolbar(props: ToolbarProps): React.ReactElement {
       </span>
 
       <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+        {/* View mode toggle */}
+        <span
+          style={{
+            display: 'inline-flex',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            overflow: 'hidden',
+          }}
+          title="Switch between List and Waterfall views"
+        >
+          <button
+            className="btn"
+            aria-pressed={props.viewMode === 'list'}
+            onClick={() => props.onViewModeChange('list')}
+            style={{
+              borderRadius: 0,
+              borderRight: '1px solid var(--border)',
+              padding: '4px 8px',
+              fontSize: 11,
+            }}
+          >
+            ☰ List
+          </button>
+          <button
+            className="btn"
+            aria-pressed={props.viewMode === 'waterfall'}
+            onClick={() => props.onViewModeChange('waterfall')}
+            style={{
+              borderRadius: 0,
+              padding: '4px 8px',
+              fontSize: 11,
+            }}
+          >
+            ▭ Waterfall
+          </button>
+        </span>
+
         <label
           style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12 }}
           title="Capture GraphQL subscriptions over WebSocket (requires debugger attachment)"
