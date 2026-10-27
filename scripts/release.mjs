@@ -168,26 +168,47 @@ function createZip(version) {
 }
 
 function generateReleaseNotes(version) {
-  // Get commits since last tag for the changelog
+  // Get the previous tag (second most recent if current version tag exists, otherwise most recent)
   let commits = '';
-  let lastTag = '';
+  let previousTag = '';
+  
   try {
-    lastTag = run('git describe --tags --abbrev=0 2>/dev/null || echo ""', { silent: true });
-    if (lastTag) {
-      commits = run(`git log ${lastTag}..HEAD --pretty=format:"- %s" --no-merges`, { silent: true });
+    // Get all tags sorted by version, newest first
+    const allTags = run('git tag --sort=-v:refname', { silent: true });
+    const tags = allTags ? allTags.split('\n').filter(t => t.trim()) : [];
+    
+    if (tags.length > 0) {
+      // Find the previous tag (not the one we're about to create)
+      const currentTag = `v${version}`;
+      previousTag = tags.find(t => t !== currentTag) || '';
+    }
+    
+    if (previousTag) {
+      // Get commits between previous tag and HEAD
+      commits = run(`git log ${previousTag}..HEAD --pretty=format:"- %s" --no-merges`, { silent: true });
     } else {
-      // First release - get recent commits
-      commits = run('git log --pretty=format:"- %s" --no-merges -20', { silent: true });
+      // First release - this shouldn't include all history
+      // Just get commits since the beginning but cap it
+      commits = '- Initial release';
     }
   } catch {
-    commits = '';
+    commits = '- Initial release';
+  }
+
+  // Filter out version bump commits from the changelog
+  if (commits && commits !== '- Initial release') {
+    const filteredCommits = commits
+      .split('\n')
+      .filter(line => !line.includes('chore: bump version'))
+      .join('\n');
+    commits = filteredCommits || '- Bug fixes and improvements';
   }
 
   const notes = `## Querio+ v${version}
 
-${lastTag ? `### Changes since ${lastTag}` : '### Changes'}
+${previousTag ? `### Changes since ${previousTag}` : '### What\'s New'}
 
-${commits || '- Initial release'}
+${commits}
 
 ### Installation
 
