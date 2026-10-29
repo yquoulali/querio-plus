@@ -2,7 +2,7 @@
   "name": "querio-plus",
   "private": true,
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A Chrome DevTools extension for inspecting GraphQL and HTTP requests. Features filtering, search, JSON tree view, request comparison, and session export.",
   "author": "Younes Qoualali",
   "license": "MIT",
